@@ -1,8 +1,6 @@
-# Matrix Effect 101 - Project License
-
 MIT License
 
-Copyright (c) 2026 Matrix Effect Development Team
+Copyright (c) 2025 Matrix101CP - Complete Portal Edition
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -24,25 +22,21 @@ SOFTWARE.
 
 ---
 
-## Additional Notes
+## Hardware Disclaimer
 
-This project includes physics simulations and visual effects that may cause:
-- Mesmerization and loss of time perception
-- Spontaneous appreciation for embedded programming
-- Uncontrollable urge to explore more matrix effects
-- Philosophical questions about the nature of digital reality
+This software is designed specifically for:
+- ESP32-2432S028 (Cheap Yellow Display 2.8")
+- ESP32-2432S032 (Cheap Yellow Display 3.2") 
+- Compatible CYD variants with ILI9341 display driver
 
-The authors are not responsible for:
-- ESP32 boards achieving self-awareness
-- Matrix effects becoming too realistic
-- Users questioning their own reality
-- Coffee going cold while watching particle physics
+Use with other hardware configurations is at your own risk. The developers are not responsible for any damage to hardware resulting from incorrect usage or incompatible configurations.
 
-Use responsibly. The matrix is infinite, but your free time isn't.
+## Third Party Acknowledgments
 
-Remember: There is no spoon... but there are 101 ways to watch the rain fall.
+This project incorporates or builds upon:
+- Arduino ESP32 Framework (LGPL 2.1)
+- GFX Library for Arduino (BSD License)  
+- PlatformIO Build System (Apache 2.0)
+- ESP32 DNSServer Library (LGPL 2.1)
 
----
-
-"The future's uncertain and the end is always near..." - Jim Morrison
-"But until then, we have physics simulations." - Matrix Effect 101 Team
+All third-party components retain their original licenses and attributions.

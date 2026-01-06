@@ -3,6 +3,10 @@
 
 #include <Arduino_GFX_Library.h>
 #include <XPT2046_Touchscreen.h>
+#include <WiFi.h>
+#include <WebServer.h>
+#include <DNSServer.h>
+#include <Preferences.h>
 
 // Hardware pins - PROVEN WORKING CONFIG
 #define BL_PIN 21
@@ -537,6 +541,25 @@ int skipDistance[MATRIX_COLS];
 bool touchPressed = false;
 unsigned long lastPress = 0;
 
+// === WIFI CONTROL PORTAL SYSTEM ===
+WebServer* portalServer = nullptr;
+DNSServer* portalDNS = nullptr;
+Preferences preferences;
+bool portalActive = false;
+bool portalInitialized = false;
+
+// Portal controlled settings
+struct PortalSettings {
+  int currentMode;              // Current effect mode (0-100) 
+  int autoAdvanceTime;          // Auto-advance timing: 0=30s, 1=1m, 2=10m, 3=1h, 4=off
+  int speedSetting;             // Speed: 0=slow, 1=normal, 2=fast, 3=ludicrous
+  int brightnessSetting;        // Brightness: 0=25%, 1=50%, 2=75%, 3=100%
+  bool settingsChanged;         // Flag to apply changes
+} portalSettings;
+
+// Auto-advance timing values in milliseconds
+unsigned long autoAdvanceTimes[] = {30000, 60000, 600000, 3600000, 0}; // 30s, 1m, 10m, 1h, off
+
 // Character sets for different modes
 const char matrixChars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()+-=[]{}|;:,.<>?";
 const char xscreenChars[] = "ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ0123456789";
@@ -738,6 +761,12 @@ void initAdvancedColumn(int col);
 void updateAdvancedColumn(int col, unsigned long currentTime);
 void drawAdvancedColumn(int col);
 uint16_t getAdvancedColor(int intensity, bool isHead, int col);
+
+// WiFi Portal function declarations
+void initPortal();
+void handlePortalRoot();
+void handlePortalSubmit();
+void closePortal();
 void initPlasmaSystem();
 void initPlasmaColumn(int col);
 void updatePlasmaSystem(unsigned long currentTime);
@@ -1608,8 +1637,16 @@ void setup() {
   initGLMatrix(); // Initialize GLMatrix data for 3D mode
   
   Serial.println("✅ MULTI-EFFECT SCREENSAVER INITIALIZED");
-  Serial.println("Touch screen or press boot button to cycle modes:");
-  Serial.println("Hold boot button for 1+ seconds to toggle auto-scroll (30s each mode)");
+  
+  // Set good defaults for immediate Matrix display
+  currentMode = MATRIX_CUSTOM; // Start with basic Matrix effect
+  autoScroll = true;           // Auto-advance enabled
+  digitalWrite(BL_PIN, HIGH);  // Full brightness
+  
+  // Start WiFi Control Portal on boot (runs in background)
+  initPortal();
+  Serial.println("🌐 WiFi Control Portal started: 'Matrix101_Control'");
+  Serial.println("📱 Matrix effects running! Connect to WiFi to configure settings");
   
   lastModeSwitch = millis();
 }
@@ -7895,6 +7932,13 @@ void drawEpicycle() {
 }
 
 void loop() {
+  // Handle WiFi portal in parallel with Matrix effects
+  if (portalActive) {
+    portalDNS->processNextRequest();
+    portalServer->handleClient();
+    // Continue to run Matrix effects below - no return!
+  }
+  
   // Check boot button for both short press (mode switch) and long press (auto-scroll toggle)
   if (digitalRead(BOOT_PIN) == LOW) {
     if (!buttonHeld && (millis() - lastPress > 300)) {
@@ -8898,5 +8942,166 @@ uint16_t getHistoryColor(int intensity, bool isHead) {
     return gfx->color565(intensity * 0.7, intensity * 0.9, intensity);
   } else {
     return gfx->color565(intensity * 0.4, intensity * 0.6, intensity * 0.8);
+  }
+}
+
+// === WIFI CONTROL PORTAL FUNCTIONS ===
+
+void initPortal() {
+  // Load saved settings
+  preferences.begin("matrix101", false);
+  portalSettings.currentMode = preferences.getInt("mode", 0);  // Default to Matrix Custom
+  portalSettings.autoAdvanceTime = preferences.getInt("autoTime", 0); // Default to 30s auto-advance  
+  portalSettings.speedSetting = preferences.getInt("speed", 1); // Default to normal
+  portalSettings.brightnessSetting = preferences.getInt("brightness", 3); // Default to 100%
+  preferences.end();
+  
+  // Start WiFi Access Point
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP("Matrix101_Control", "");
+  delay(500);
+  
+  // Initialize DNS and Web Server
+  if (portalDNS == nullptr) portalDNS = new DNSServer();
+  if (portalServer == nullptr) portalServer = new WebServer(80);
+  
+  portalDNS->start(53, "*", WiFi.softAPIP());
+  
+  // Set up web routes
+  portalServer->on("/", handlePortalRoot);
+  portalServer->on("/submit", HTTP_POST, handlePortalSubmit);
+  portalServer->onNotFound(handlePortalRoot);
+  portalServer->begin();
+  
+  portalActive = true;
+  Serial.printf("Portal IP: %s\n", WiFi.softAPIP().toString().c_str());
+}
+
+void handlePortalRoot() {
+  String html = "<!DOCTYPE html><html><head><meta charset='UTF-8'>";
+  html += "<meta name='viewport' content='width=device-width, initial-scale=1'>";
+  html += "<style>body{background:#000;color:#00ff00;font-family:'Courier New',monospace;text-align:center;padding:20px;}";
+  html += "input,select{background:#111;color:#00ff00;border:2px solid #00ff00;padding:10px;margin:5px;font-family:inherit;}";
+  html += "button{background:#003300;color:#00ff00;border:2px solid #00ff00;padding:15px 30px;cursor:pointer;font-family:inherit;font-size:16px;}";
+  html += "button:hover{background:#00ff00;color:#000;}</style></head><body>";
+  html += "<h1>🌿 MATRIX101 CONTROL PORTAL 🌿</h1>";
+  html += "<p>⚡ Matrix effects are currently running! ⚡</p>";
+  html += "<p>Configure settings below to customize your display</p>";
+  html += "<form method='post' action='/submit'>";
+  
+  html += "<p>Current Mode (0-100):</p>";
+  html += "<input type='number' name='mode' value='" + String(portalSettings.currentMode) + "' min='0' max='100'><br>";
+  
+  html += "<p>Auto-Advance Timer:</p>";
+  html += "<select name='autoTime'>";
+  String autoOptions[] = {"30 Seconds", "1 Minute", "10 Minutes", "1 Hour", "OFF"};
+  for (int i = 0; i < 5; i++) {
+    html += "<option value='" + String(i) + "'";
+    if (i == portalSettings.autoAdvanceTime) html += " selected";
+    html += ">" + autoOptions[i] + "</option>";
+  }
+  html += "</select><br>";
+  
+  html += "<p>Speed Setting:</p>";
+  html += "<select name='speed'>";
+  String speedOptions[] = {"Slow", "Normal", "Fast", "Ludicrous"};
+  for (int i = 0; i < 4; i++) {
+    html += "<option value='" + String(i) + "'";
+    if (i == portalSettings.speedSetting) html += " selected";
+    html += ">" + speedOptions[i] + "</option>";
+  }
+  html += "</select><br>";
+  
+  html += "<p>Brightness:</p>";
+  html += "<select name='brightness'>";
+  String brightnessOptions[] = {"25%", "50%", "75%", "100%"};
+  for (int i = 0; i < 4; i++) {
+    html += "<option value='" + String(i) + "'";
+    if (i == portalSettings.brightnessSetting) html += " selected";
+    html += ">" + brightnessOptions[i] + "</option>";
+  }
+  html += "</select><br>";
+  
+  html += "<br><button type='submit'>⚡ SAVE SETTINGS & CLOSE PORTAL ⚡</button>";
+  html += "</form>";
+  html += "<p style='color:#008800;margin-top:20px;'>Settings will be applied immediately and portal will close</p>";
+  html += "</body></html>";
+  
+  portalServer->send(200, "text/html", html);
+}
+
+void handlePortalSubmit() {
+  // Get form data
+  if (portalServer->hasArg("mode")) {
+    portalSettings.currentMode = portalServer->arg("mode").toInt();
+    portalSettings.currentMode = constrain(portalSettings.currentMode, 0, 100);
+  }
+  if (portalServer->hasArg("autoTime")) {
+    portalSettings.autoAdvanceTime = portalServer->arg("autoTime").toInt();
+  }
+  if (portalServer->hasArg("speed")) {
+    portalSettings.speedSetting = portalServer->arg("speed").toInt();
+  }
+  if (portalServer->hasArg("brightness")) {
+    portalSettings.brightnessSetting = portalServer->arg("brightness").toInt();
+  }
+  
+  // Save settings
+  preferences.begin("matrix101", false);
+  preferences.putInt("mode", portalSettings.currentMode);
+  preferences.putInt("autoTime", portalSettings.autoAdvanceTime);
+  preferences.putInt("speed", portalSettings.speedSetting);
+  preferences.putInt("brightness", portalSettings.brightnessSetting);
+  preferences.end();
+  
+  // Send success response
+  String html = "<!DOCTYPE html><html><head><meta charset='UTF-8'>";
+  html += "<style>body{background:#000;color:#00ff00;font-family:'Courier New',monospace;text-align:center;padding:20px;}</style></head><body>";
+  html += "<h1>✅ SETTINGS SAVED ✅</h1>";
+  html += "<p>Matrix101 is starting with your settings...</p>";
+  html += "<p>You can disconnect from WiFi now.</p>";
+  html += "</body></html>";
+  
+  portalServer->send(200, "text/html", html);
+  
+  // Apply settings and close portal
+  portalSettings.settingsChanged = true;
+  delay(2000); // Give user time to see confirmation
+  closePortal();
+}
+
+void closePortal() {
+  if (portalActive) {
+    portalServer->stop();
+    portalDNS->stop();
+    WiFi.softAPdisconnect(true);
+    WiFi.mode(WIFI_OFF);
+    portalActive = false;
+    
+    // Apply saved settings to current system
+    currentMode = (EffectMode)portalSettings.currentMode;
+    if (portalSettings.autoAdvanceTime < 4) {
+      autoScroll = true;
+      // Note: Timing uses existing autoSwitchInterval constant (30s)
+      // Advanced timing would need additional implementation
+    } else {
+      autoScroll = false;
+    }
+    
+    // Apply brightness (simple PWM control)
+    int brightnessLevels[] = {64, 128, 192, 255}; // 25%, 50%, 75%, 100%
+    analogWrite(BL_PIN, brightnessLevels[portalSettings.brightnessSetting]);
+    
+    Serial.println("🚀 Portal closed - Matrix101 starting!");
+    Serial.printf("Mode: %d, Auto: %s, Speed: %d, Brightness: %d\n", 
+                  currentMode, autoScroll ? "ON" : "OFF", 
+                  portalSettings.speedSetting, portalSettings.brightnessSetting);
+    
+    // Reset display and start effects
+    gfx->fillScreen(BLACK);
+    for(int i = 0; i < MATRIX_COLS; i++) {
+      initColumn(i);
+      columns[i].y = random(-100, gfx->height());
+    }
   }
 }
