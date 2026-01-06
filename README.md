@@ -51,7 +51,7 @@ pip install platformio
 
 ### **2. Clone & Build**
 ```bash
-git clone [your-repo-url]
+git clone https://github.com/Coreymillia/Matrix-Engine-101-Code-Rain-Effects-ESP32-2432S028
 cd Matrix101
 pio run                    # Build
 pio run --target upload    # Flash to ESP32
