@@ -283,10 +283,13 @@ Open source project - feel free to use, modify, and distribute.
 Transform your Cheap Yellow Display into the ultimate Matrix screensaver with WiFi control!
 
 ```bash
-git clone https://github.com/[your-username]/Matrix101CP
+git clone https://github.com/Coreymillia/Matrix-Engine-101-Code-Rain-Effects-ESP32-2432S028
 cd Matrix101CP
 pio run --target upload
 # Connect to "Matrix101_Control" and enjoy! 🌿
+
+  **Note**
+Depending on what ESP32-2432S028 you have you may have to invert the colors if the background FLASHES WHITE. 
 ```
 
 ---
@@ -295,8 +298,8 @@ pio run --target upload
 
 ---
 
-**Last Updated**: January 6, 2025  
+**Last Updated**: January 6, 2026 
 **Version**: 1.0.1-CP (Complete Portal Edition)  
 **Total Effects**: 101 unique Matrix variations  
 **Control Method**: WiFi Portal + Boot Button  
-**Status**: Production Ready ✅
+**Status**: Production Ready ✅ Check my eBay store for a pre flashed CYD. 
