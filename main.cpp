@@ -873,7 +873,25 @@ void drawDottedLine(int x1, int y1, int x2, int y2, uint16_t color);
 // Initialize a single matrix column based on current mode
 void initColumn(int col) {
   columns[col].y = -random(10, 30);
-  columns[col].speed = random(1, 4);
+  
+  // Apply speed setting from portal
+  int baseSpeedMin = 1, baseSpeedMax = 4;
+  switch(portalSettings.speedSetting) {
+    case 0: // Slow
+      baseSpeedMin = 1; baseSpeedMax = 2;
+      break;
+    case 1: // Normal
+      baseSpeedMin = 1; baseSpeedMax = 4;
+      break;
+    case 2: // Fast
+      baseSpeedMin = 3; baseSpeedMax = 6;
+      break;
+    case 3: // Ludicrous
+      baseSpeedMin = 5; baseSpeedMax = 10;
+      break;
+  }
+  
+  columns[col].speed = random(baseSpeedMin, baseSpeedMax);
   columns[col].length = random(5, 15);
   columns[col].lastUpdate = millis();
   
@@ -8006,18 +8024,22 @@ void loop() {
     }
   }
   
-  // Auto-scroll mode switching
-  if (autoScroll && (millis() - lastModeSwitch > autoSwitchInterval)) {
-    Serial.println("Auto-scroll: switching to next mode");
-    switchMode();
-    lastModeSwitch = millis();
+  // Auto-scroll mode switching with proper timing
+  if (autoScroll) {
+    unsigned long currentInterval = autoAdvanceTimes[portalSettings.autoAdvanceTime];
+    if (currentInterval > 0 && (millis() - lastModeSwitch > currentInterval)) {
+      Serial.printf("Auto-scroll: switching to next mode (after %lums)\n", currentInterval);
+      switchMode();
+      lastModeSwitch = millis();
+    }
   }
   
   // Run the current effect
   drawMatrix();
   
-  // Frame rate control
-  delay(50);
+  // Frame rate control with speed setting
+  int frameDelays[] = {80, 50, 30, 15}; // Slow, Normal, Fast, Ludicrous (ms)
+  delay(frameDelays[portalSettings.speedSetting]);
 }
 
 // === SIGNAL PATTERN DETECTION SYSTEM ===
@@ -9082,10 +9104,10 @@ void closePortal() {
     currentMode = (EffectMode)portalSettings.currentMode;
     if (portalSettings.autoAdvanceTime < 4) {
       autoScroll = true;
-      // Note: Timing uses existing autoSwitchInterval constant (30s)
-      // Advanced timing would need additional implementation
+      Serial.printf("Auto-advance enabled: %lums interval\n", autoAdvanceTimes[portalSettings.autoAdvanceTime]);
     } else {
       autoScroll = false;
+      Serial.println("Auto-advance disabled");
     }
     
     // Apply brightness (simple PWM control)
