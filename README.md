@@ -1,9 +1,9 @@
-# Matrix101 GitHub Fonts Edition 🌿
+# Matrix101 Fonts Edition 🌿
 **101 Mesmerizing Matrix Effects with Smart Font Cycling System**
 
 Advanced ESP32 Matrix Digital Rain Screensaver for 320x240 TFT Displays
 
-## 🚀 What's New in GitHub Fonts Edition
+## 🚀 What's New in Fonts Edition
 ⚡ **Smart Font Cycling**: Automatically cycles through 12 font sizes after completing all 101 modes
 🎛️ **Font Control Toggle**: Turn auto font cycling ON/OFF via web portal
 📱 **Complete WiFi Portal**: Full control interface with persistent settings
@@ -103,7 +103,7 @@ Mode Flow: 0 → 1 → 2 → ... → 99 → 100 → (Font Change) → 0 → 1 �
 
 ### 1. Flash the Firmware
 ```bash
-git clone https://github.com/[your-username]/Matrix101GithubFonts
+git clone https://github.com/Coreymillia/Matrix-Engine-101-Code-Rain-Effects-ESP32-2432S028
 cd Matrix101GithubFonts  
 pio run --target upload
 ```
@@ -196,17 +196,6 @@ Each effect follows proven framework:
 - ✅ Persistent font preferences  
 - ✅ 101 total matrix effects
 - ✅ Complete WiFi control portal
-
-## 🚀 Get Started Today!
-
-Transform your ESP32 display into the ultimate Matrix screensaver with intelligent font cycling!
-
-```bash
-git clone https://github.com/[your-username]/Matrix101GithubFonts
-cd Matrix101GithubFonts
-pio run --target upload
-# Watch the matrix effects cycle through 12 different fonts! 🔤
-```
 
 ---
 
