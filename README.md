@@ -1,305 +1,220 @@
-# 🌿 Matrix101CP - Complete Portal Edition 🌿
+# Matrix101 GitHub Fonts Edition 🌿
+**101 Mesmerizing Matrix Effects with Smart Font Cycling System**
 
-**101 Mesmerizing Matrix Effects with WiFi Control Portal**
+Advanced ESP32 Matrix Digital Rain Screensaver for 320x240 TFT Displays
 
-*Advanced ESP32 Matrix Digital Rain Screensaver for Cheap Yellow Display (CYD)*
+## 🚀 What's New in GitHub Fonts Edition
+⚡ **Smart Font Cycling**: Automatically cycles through 12 font sizes after completing all 101 modes
+🎛️ **Font Control Toggle**: Turn auto font cycling ON/OFF via web portal
+📱 **Complete WiFi Portal**: Full control interface with persistent settings
+🔧 **Manual Font Selection**: Set specific font size (0-11) via web interface
+🎯 **Perfect Mode Flow**: Runs modes 0-100, then cycles font and restarts
+🔄 **Visual Feedback**: Shows "FONT X/12" notification when cycling occurs
 
----
+## 🎭 101 Unique Matrix Effects
 
-## 🚀 **What's New in CP (Complete Portal) Edition**
+### 🌊 Core Matrix Variations (0-19)
+- Classic Digital Rain, Binary Rain, GLMatrix 3D
+- Speed variants, glitch effects, ghost trails
+- Neon green, retro amber, multicolor themes
 
-- ⚡ **Instant Start**: Matrix effects begin immediately on boot
-- 📱 **WiFi Control Portal**: No more tiny boot button struggles!
-- 🔧 **Live Configuration**: Adjust settings while effects are running
-- 🔒 **Security Feature**: Portal requires configuration to close
-- 🎯 **Perfect for Sales**: Immediate visual impact for customers
+### 🎨 Advanced Color Series (20-39)  
+- Fire (red/orange/yellow), Ice (blue/white/cyan)
+- Toxic (sickly green), Cyber (purple/pink)
+- Storm (lightning), Blood (dark red), Gold variants
 
----
+### ⚡ Physics-Based Effects (40-79)
+- **Wind Systems**: Lateral column sway, storm combinations
+- **Ripple Effects**: Sine wave distortions, tsunami variants  
+- **Fracture Physics**: Column splits, cascade reactions
+- **Plasma Fields**: Energy distortions, multi-element combos
+- **Drip Viscosity**: Blood, honey, acid, mercury, water
 
-## 🎭 **101 Unique Matrix Effects**
+### 🎆 Advanced Combinations (80-100)
+- **History Effects**: Past paths influence new rain (spacetime memory)
+- **Fireworks Integration**: Explosions with matrix physics
+- **Multi-Element Hybrids**: RippleWind, FireworksFracture, etc.
+- **Entropy Systems**: Order→chaos→collapse→rebirth cycles
+- **Tide Breathing**: Global synchronized pulsing effects
 
-### 🌊 **Core Matrix Variations (1-20)**
-- Classic Digital Rain, Sparse, Dense, Speed variants
-- Custom glitch effects, ghost trails, and more
+## 🔤 Font Cycling System
 
-### 🎨 **Color Spectrum Series (21-40)** 
-- Rainbow, sunset, ocean, forest, fire themes
-- Purple haze, electric blue, toxic green variants
+### **12 Font Sizes Available**
+- **Font 0-2**: Small text sizes (compact matrix)
+- **Font 3-5**: Medium text sizes (balanced visibility) 
+- **Font 6-8**: Large text sizes (bold matrix)
+- **Font 9-11**: Extra large text sizes (dramatic effect)
 
-### ⚡ **Advanced Physics (41-60)**
-- Gravity, magnetism, turbulence effects  
-- Wind, ripple, fracture, entropy systems
+### **Smart Auto-Cycling Logic**
+```
+Mode Flow: 0 → 1 → 2 → ... → 99 → 100 → (Font Change) → 0 → 1 → ...
+```
+- Runs all 101 modes (0-100) with current font
+- When wrapping from mode 100 back to mode 0: **Changes font size**
+- Shows visual "FONT X/12" notification during change
+- Continues with all 101 modes in new font size
+- Cycles through all 12 fonts infinitely
 
-### 🎆 **Fireworks Integration (61-80)**
-- Matrix + fireworks combinations
-- Physics-based particle systems
+### **Font Control Features**
+- **Toggle Control**: Turn auto-cycling ON/OFF via web portal
+- **Manual Selection**: Set specific font (0-11) and disable cycling
+- **Persistent Memory**: Font preferences saved to ESP32 flash
+- **Immediate Effect**: Manual font changes apply instantly
 
-### 🌌 **Spacetime Effects (81-100)**
-- History weight (past influences present)
-- Ripple-wind combinations  
-- Fracture-ripple hybrids
-- Multi-effect combinations
+## 📱 WiFi Control Portal Features
 
-### 🔮 **Special Effect (101)**
-- **MATRIX_QUANTUM**: Ultimate reality-bending finale
+### 🎮 Complete Control Interface
+**Access Method**: restart device→ Connect to "Matrix101" WiFi → Browse to 192.168.4.1
 
----
-
-## 📱 **WiFi Control Portal Features**
-
-### 🎮 **Easy Control Interface**
-Connect to **"Matrix101_Control"** WiFi network to access:
-
+**Full Control Panel**:
 - 🎯 **Mode Selection**: Choose from 101 effects (0-100)
-- ⏰ **Auto-Advance Timer**: 30s, 1min, 10min, 1hr, or OFF
-- 🏃 **Speed Control**: Slow, Normal, Fast, or Turbo
+- 🔤 **Font Size**: Set specific font (0-11) 
+- 🔄 **Font Auto-Cycling**: Toggle ON/OFF
+- ⏰ **Auto-Advance Timer**: 30s, 1min, 10min, 1hr, or OFF  
+- 🏃 **Speed Control**: Slow, Normal, Fast, or Ludicrous
 - 💡 **Brightness**: 25%, 50%, 75%, or 100%
 
-### 🔄 **Smart Behavior**
-- Portal opens automatically on first boot
-- Matrix effects run immediately while portal is active
-- Settings apply in real-time
-- Portal closes after configuration (prevents tampering)
-- Settings persist through power cycles
+### 🔄 Smart Behavior
+- Matrix effects continue while portal is active
+- Settings apply immediately and persist through reboots
+- Portal auto-closes after configuration
 
----
+## 🛠️ Hardware Requirements
 
-## 🛠️ **Hardware Requirements**
+### **ESP32 Development Board with 320x240 TFT**
+**Compatible Displays**:
+- ESP32-2432S028 "Cheap Yellow Display" (CYD)
+- ESP32 with ILI9341 320x240 TFT
+- ESP32 with ST7796 320x240 TFT
+- Any ESP32 + 320x240 SPI TFT display
 
-### **Cheap Yellow Display (CYD) Specifications:**
-- **MCU**: ESP32-2432S028 or ESP32-2432S032
-- **Display**: 2.8" or 3.2" ILI9341 TFT (320x240)
-- **Touch**: XPT2046 (optional - not used in this project)
-- **Power**: USB-C or external 5V
-- **GPIO**: Boot button for manual control
+**Features Used**:
+- Touch screen support (XPT2046) not used.
+- Physical button for manual control  -BOOT button.
+- WiFi for control portal
+- Flash storage for persistent settings
 
-### **Where to Buy:**
-- AliExpress: Search "ESP32-2432S028" or "Cheap Yellow Display"
-- Amazon: "ESP32 TFT Display 2.8 inch"
-- eBay: "CYD ESP32 Display"
+### **Where to Buy**:
+- **AliExpress**: Search "ESP32-2432S028" or "Cheap Yellow Display"
+- **Amazon**: "ESP32 TFT Display 320x240"
+- **eBay**: "CYD ESP32 Display"
 
----
+## ⚡ Quick Start Guide
 
-## ⚡ **Quick Start Guide**
-
-### 1. **Flash the Firmware**
+### 1. Flash the Firmware
 ```bash
-git clone https://github.com/[your-username]/Matrix101CP
-cd Matrix101CP
+git clone https://github.com/[your-username]/Matrix101GithubFonts
+cd Matrix101GithubFonts  
 pio run --target upload
 ```
 
-### 2. **First Boot Experience**
-- Matrix effects start immediately! 
-- Look for "Matrix101_Control" WiFi network
-- Connect with any device (phone, tablet, laptop)
-- Portal opens automatically - no password needed!
+### 2. First Boot Experience
+- Matrix effects start immediately with font cycling enabled
+- Cycles through modes 0-100, then changes font and repeats
+- Visual "FONT X/12" notification shows font changes
 
-### 3. **Configure Your Settings**
-- Select your favorite mode (0-100)
-- Set auto-advance timer
-- Adjust speed and brightness
-- Click "SAVE SETTINGS & CLOSE PORTAL"
+### 3. Configure Font Settings (Optional)
+- **activate WiFi portal
+- Connect to **"Matrix101"** WiFi network (no password)
+- Set **Font Auto-Cycling** to ON/OFF as desired
+- Choose specific **Font Size (0-11)** if desired
+- Click **"SAVE SETTINGS & CLOSE PORTAL"**
 
-### 4. **Enjoy!**
-- Portal closes and saves your preferences
-- Matrix effects continue with your settings
+### 4. Enjoy!
+- Portal closes and saves your preferences  
+- Matrix effects continue with your font settings
 - Settings persist through power cycles
 
----
+## 🎮 Physical Controls
 
-## 🎮 **Physical Controls**
-
-- **Boot Button Short Press**: Next effect manually
+- **Boot Button Short Press**: Next effect manually  
 - **Boot Button Long Press**: Toggle auto-advance on/off
-- **Reset to Portal**: Power cycle device to reopen portal
+- **Reset Settings**: Available via web portal
 
----
-
-## 🔧 **Advanced Features**
+## 🔧 Advanced Features
 
 ### **Persistent Settings**
 - All configurations saved to ESP32 flash memory
-- Settings survive power loss and reboots
-- Factory reset: Hold boot button during startup
+- Font preferences survive power loss and reboots
+- Manual font selection overrides auto-cycling
 
-### **Performance Optimized**
-- 60 FPS smooth animations
-- Efficient memory usage (28% RAM, 69% Flash)
-- Optimized for ESP32 dual-core architecture
+### **Performance Optimized**  
+- **60 FPS** smooth animations across all effects
+- **Efficient memory**: 28% RAM, 69% Flash usage
+- **Dual-core optimization** for ESP32 architecture
+- **Smart font rendering** with optimized text display
 
 ### **Matrix Effect Framework**
-Each effect follows our proven framework:
-- Consistent performance across all 101 modes
-- Smooth transitions and timing
-- Color-coordinated themes
-- Physics-based realistic motion
+Each effect follows proven framework:
+- Consistent 60fps performance across all 101 modes
+- Smooth transitions between effects and font changes
+- Color-coordinated themes with proper contrast
+- Physics-based realistic motion systems
 
----
+## 📊 Technical Specifications
 
-## 🎨 **Effect Categories Deep Dive**
-
-### **Physics-Based Effects**
-- **Gravity**: Characters fall with realistic physics
-- **Wind**: Horizontal forces affect character paths  
-- **Magnetism**: Invisible force fields influence flow
-- **Turbulence**: Chaotic fluid dynamics simulation
-
-### **Hybrid Combinations**  
-- **RippleWind**: Wind + sine wave distortions
-- **FireworksFracture**: Explosions cause column splits
-- **HistoryWeight**: Past paths influence new rain
-- **EntropyFireworks**: Celebrations accelerate chaos
-
-### **Visual Spectacles**
-- **Quantum**: Reality-bending final effect
-- **Entropy**: System breakdown visualization
-- **Cascade**: Chain reaction effects
-- **Dimensional**: Multi-layered depth effects
-
----
-
-## 🛠️ **Development & Customization**
-
-### **Built With:**
-- **PlatformIO**: Modern embedded development
-- **Arduino Framework**: ESP32 ecosystem
-- **GFX Library**: High-performance graphics
-- **DNSServer**: Captive portal functionality
-
-### **Key Files:**
-- `src/main.cpp`: Complete effect system (9000+ lines)
-- `platformio.ini`: Build configuration
-- `lib/`: Required graphics libraries
-
-### **Adding New Effects:**
-1. Follow the established framework pattern
-2. Add case statement in main switch
-3. Implement effect function
-4. Update mode count and documentation
-
----
-
-## 🔍 **Troubleshooting**
-
-### **Common Issues:**
-
-**Portal Won't Open:**
-- Power cycle the device
-- Portal opens automatically on startup
-- Look for "Matrix101_Control" WiFi network
-
-**Effects Not Visible:**
-- Check power supply (5V recommended)
-- Verify display connection
-- Try different brightness settings
-
-**Settings Not Saving:**
-- Complete the portal configuration process
-- Click "SAVE SETTINGS" button
-- Don't disconnect during save process
-
-**Performance Issues:**
-- Use quality power supply
-- Avoid overheating (ensure ventilation)
-- Reset to factory defaults if needed
-
----
-
-## 📊 **Technical Specifications**
-
-### **Performance Metrics:**
-- **Frame Rate**: 60 FPS sustained
-- **Memory Usage**: 92KB RAM (28% of available)
-- **Flash Usage**: 899KB (69% of available) 
+### **Performance Metrics**:
+- **Frame Rate**: 60 FPS sustained across all effects
+- **Memory Usage**: 92KB RAM (28% of available)  
+- **Flash Usage**: 900KB (69% of available)
+- **Font Change Time**: <1 second with visual feedback
 - **Power Draw**: ~200mA @ 5V typical
-- **WiFi Range**: 50+ feet typical indoor range
 
-### **Compatibility:**
+### **Compatibility**:
 - ✅ ESP32-2432S028 (2.8" CYD)
-- ✅ ESP32-2432S032 (3.2" CYD) 
-- ✅ All major CYD variants
-- ⚠️ Requires ILI9341 display driver
-- ⚠️ Boot button must be GPIO0
+- ✅ ESP32-2432S032 (3.2" CYD)  
+- ✅ ESP32 + ILI9341 320x240 displays
+- ✅ ESP32 + ST7796 320x240 displays
+- ⚠️ Requires SPI TFT display
+- ⚠️ Touch functionality optional
 
----
+## 🔍 Troubleshooting
 
-## 🎯 **Perfect For:**
+### **Font Issues**:
+- **Fonts not cycling**: Check "Font Auto-Cycling" setting in web portal
+- **Wrong font size**: Use web portal to manually select font (0-11)
+- **Font change not visible**: Ensure "FONT X/12" notification appears
 
-- **Digital Art Displays**: Mesmerizing visual experiences
-- **Retail Displays**: Eye-catching customer attraction
-- **Home Decoration**: Futuristic ambient lighting
-- **Gifts**: Unique tech presents for Matrix fans
-- **Learning**: ESP32 and graphics programming education
+### **Common Issues**:
+- **Portal won't open**: Hold screen firmly for full 3 seconds
+- **Settings not saving**: Complete web portal process, click "SAVE SETTINGS"  
+- **Effects not smooth**: Use quality 5V power supply, check connections
 
----
+## 🎯 Perfect For:
+- **Digital Art Displays**: 101 unique visual experiences with font variety
+- **Retail Displays**: Eye-catching matrix effects with controllable fonts
+- **Home Decoration**: Customizable matrix ambiance with font personality
+- **Gifts**: Ultimate Matrix fan present with full control
+- **Learning**: ESP32 graphics programming with font management
 
-## 🌟 **Version History**
+## 🌟 Version History
 
-- **v1.0.1-CP**: Complete Portal Edition (Current)
-  - WiFi control portal integration
-  - Instant-start Matrix effects
-  - 101 total effects with combinations
-  - Live configuration capability
+**v2026.01.13 - GitHub Fonts Edition** (Current)
+- ✅ Smart font cycling system (12 fonts)  
+- ✅ Font control toggle in web portal
+- ✅ Visual font change notifications
+- ✅ Persistent font preferences  
+- ✅ 101 total matrix effects
+- ✅ Complete WiFi control portal
 
-- **v1.0.1**: Original Matrix101 Release
-  - 101 Matrix effects
-  - Boot button control only
-  - Basic auto-advance functionality
+## 🚀 Get Started Today!
 
----
-
-## 🤝 **Contributing**
-
-Contributions welcome! This project demonstrates:
-- ESP32 graphics programming
-- Real-time effect systems  
-- WiFi captive portal implementation
-- PlatformIO build systems
-
-### **Ideas for Enhancement:**
-- MQTT integration for IoT control
-- Mobile app companion
-- Sound reactive effects
-- Multiple device synchronization
-- Custom effect scripting system
-
----
-
-## 📜 **License**
-
-Open source project - feel free to use, modify, and distribute.
-
-### **Credits:**
-- Original Matrix concept: The Matrix (1999)
-- ESP32 ecosystem: Espressif Systems
-- Graphics libraries: Arduino community
-- Development: Advanced Matrix Effect Framework
-
----
-
-## 🚀 **Get Started Today!**
-
-Transform your Cheap Yellow Display into the ultimate Matrix screensaver with WiFi control!
+Transform your ESP32 display into the ultimate Matrix screensaver with intelligent font cycling!
 
 ```bash
-git clone https://github.com/Coreymillia/Matrix-Engine-101-Code-Rain-Effects-ESP32-2432S028
-cd Matrix101CP
+git clone https://github.com/[your-username]/Matrix101GithubFonts
+cd Matrix101GithubFonts
 pio run --target upload
-# Connect to "Matrix101_Control" and enjoy! 🌿
-
-  **Note**
-Depending on what ESP32-2432S028 you have you may have to invert the colors if the background FLASHES WHITE. 
+# Watch the matrix effects cycle through 12 different fonts! 🔤
 ```
 
 ---
 
-*"Welcome to the Matrix... but this time, YOU have the control."* 🌿⚡📱
+**"Welcome to the Matrix... now with the perfect font for every mood." 🌿⚡🔤**
 
----
-
-**Last Updated**: January 6, 2026 
-**Version**: 1.0.1-CP (Complete Portal Edition)  
+**Last Updated**: January 13, 2026  
+**Version**: GitHub Fonts Edition  
 **Total Effects**: 101 unique Matrix variations  
-**Control Method**: WiFi Portal + Boot Button  
-**Status**: Production Ready ✅ Check my eBay store for a pre flashed CYD. 
+**Font System**: 12 sizes with smart auto-cycling  
+**Control Method**: WiFi Portal + Physical Controls  
+**Status**: Production Ready ✅

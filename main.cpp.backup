@@ -128,33 +128,8 @@ enum EffectMode {
   MATRIX_FIREWORKSFRACTURE, // Firework explosions cause cascading fractures 🎆💥
   MATRIX_FIREWORKSENTROPY,  // Fireworks accelerate entropy decay cycles 🎆🌀
   MATRIX_TIDEWIND,          // Breathing wind currents - tide modulates wind patterns 🌊🌪️
-  TOTAL_MODES = 101     // 101 modes: 0-100, font cycles when wrapping back to 0
+  TOTAL_MODES = 101     // 101 modes - Beyond the century! 🎉
 };
-
-// Font cycling system - 12 fonts available
-int currentFontIndex = 0;  // Track current font (0 = default/no font)
-const int totalFonts = 12;  // Number of available fonts
-int globalTextSize = 1;    // Global text size that all matrix functions should use
-
-void applyGlobalFont(int fontIndex) {
-  // Use text size variations to create different "fonts"
-  switch(fontIndex) {
-    case 0:  globalTextSize = 1; break;  // Small
-    case 1:  globalTextSize = 2; break;  // Medium
-    case 2:  globalTextSize = 3; break;  // Large
-    case 3:  globalTextSize = 1; break;  // Small variation
-    case 4:  globalTextSize = 2; break;  // Medium variation
-    case 5:  globalTextSize = 1; break;  // Tiny
-    case 6:  globalTextSize = 3; break;  // Large bold
-    case 7:  globalTextSize = 2; break;  // Medium bold
-    case 8:  globalTextSize = 1; break;  // Small mono
-    case 9:  globalTextSize = 2; break;  // Medium large
-    case 10: globalTextSize = 3; break;  // Extra large
-    case 11: globalTextSize = 2; break;  // Medium bold
-    default: globalTextSize = 1; break;  // Fallback to small
-  }
-  gfx->setTextSize(globalTextSize);
-}
 
 EffectMode currentMode = MATRIX_CUSTOM;
 unsigned long lastTouch = 0;
@@ -579,7 +554,6 @@ struct PortalSettings {
   int autoAdvanceTime;          // Auto-advance timing: 0=30s, 1=1m, 2=10m, 3=1h, 4=off
   int speedSetting;             // Speed: 0=slow, 1=normal, 2=fast, 3=ludicrous
   int brightnessSetting;        // Brightness: 0=25%, 1=50%, 2=75%, 3=100%
-  bool fontCyclingEnabled;      // Font cycling on/off toggle
   bool settingsChanged;         // Flag to apply changes
 } portalSettings;
 
@@ -1217,7 +1191,7 @@ void switchMode() {
   // Clear screen
   gfx->fillScreen(BLACK);
   
-  Serial.printf("Mode: %d (font %d)\n", currentMode, currentFontIndex);
+  // Show mode name
   gfx->setTextColor(WHITE);
   gfx->setTextSize(2);
   gfx->setCursor(10, 10);
@@ -1700,7 +1674,7 @@ void drawDripColumn(int col) {
   int x = col * CHAR_WIDTH;
   DripColumn* drip = &dripColumns[col];
   
-  gfx->setTextSize(globalTextSize);
+  gfx->setTextSize(1);
   
   // Draw main column trail
   for (int i = 0; i < columns[col].length; i++) {
@@ -2121,7 +2095,7 @@ void drawFractureColumn(int col) {
   int x = col * CHAR_WIDTH;
   FractureColumn* fracture = &fractureColumns[col];
   
-  gfx->setTextSize(globalTextSize);
+  gfx->setTextSize(1);
   
   // Draw main column trail (same as normal matrix)
   for (int i = 0; i < columns[col].length; i++) {
@@ -2329,7 +2303,7 @@ void drawAdvancedColumn(int col) {
     drawX = constrain(drawX, 0, gfx->width() - CHAR_WIDTH);
   }
   
-  gfx->setTextSize(globalTextSize);
+  gfx->setTextSize(1);
   
   // Draw column trail
   for (int i = 0; i < columns[col].length; i++) {
@@ -2619,7 +2593,7 @@ void drawPlasmaColumn(int col) {
   float energyMult, forceMult, sparkChance;
   getPlasmaParameters(currentMode, &energyMult, &forceMult, &sparkChance);
   
-  gfx->setTextSize(globalTextSize);
+  gfx->setTextSize(1);
   
   // Draw column trail with plasma bending
   for (int i = 0; i < columns[col].length; i++) {
@@ -3003,7 +2977,7 @@ void drawCascadeColumn(int col) {
   CascadeColumn* cascade = &cascadeColumns[col];
   int baseX = col * CHAR_WIDTH;
   
-  gfx->setTextSize(globalTextSize);
+  gfx->setTextSize(1);
   
   // Draw column trail with stress-based effects
   for (int i = 0; i < columns[col].length; i++) {
@@ -3463,7 +3437,7 @@ void updateEntropyColumn(int col, unsigned long currentTime) {
   
   // Draw with entropy effects
   int baseX = col * CHAR_WIDTH;
-  gfx->setTextSize(globalTextSize);
+  gfx->setTextSize(1);
 
   for (int i = 0; i < columns[col].length; i++) {
     int charY = columns[col].y - (i * CHAR_HEIGHT);
@@ -4317,7 +4291,7 @@ void updateColumn(int col) {
   
   // Draw the column trail with mode-specific styling
   int x = col * CHAR_WIDTH;
-  gfx->setTextSize(globalTextSize);
+  gfx->setTextSize(1);
   
   for (int i = 0; i < columns[col].length; i++) {
     int charY = columns[col].y - (i * CHAR_HEIGHT);
@@ -5954,7 +5928,7 @@ void drawMatrixStorm() {
     }
     
     // Draw the drop trail
-    gfx->setTextSize(globalTextSize);
+    gfx->setTextSize(1);
     for (int j = 0; j < drop->length && j < 20; j++) {
       int charY = drop->y - (j * 12);
       if (charY < -10 || charY > 250) continue;
@@ -7531,7 +7505,7 @@ void drawXJack() {
   int currentLine = (int)(typingSpeed / 50) % numLines;
   int currentChar = ((int)typingSpeed % 50);
   
-  gfx->setTextSize(globalTextSize);
+  gfx->setTextSize(1);
   
   // Draw previous lines
   for (int line = 0; line < currentLine && line < 20; line++) {
@@ -7782,7 +7756,7 @@ void drawBinaryHorizon() {
           isOne ? 100 : 255
         );
         
-        gfx->setTextSize(globalTextSize);
+        gfx->setTextSize(1);
         gfx->setTextColor(digitColor);
         gfx->setCursor(streamX, blockY);
         gfx->printf("%d", isOne ? 1 : 0);
@@ -7816,7 +7790,7 @@ void drawBinaryHorizon() {
           isZero ? 200 : 80
         );
         
-        gfx->setTextSize(globalTextSize);
+        gfx->setTextSize(1);
         gfx->setTextColor(digitColor);
         gfx->setCursor(streamX, blockY);
         gfx->printf("%d", isZero ? 0 : 1);
@@ -8050,29 +8024,11 @@ void loop() {
     }
   }
   
-  // Auto-scroll mode switching with font cycling
+  // Auto-scroll mode switching with proper timing
   if (autoScroll) {
     unsigned long currentInterval = autoAdvanceTimes[portalSettings.autoAdvanceTime];
     if (currentInterval > 0 && (millis() - lastModeSwitch > currentInterval)) {
-      currentMode = (EffectMode)((currentMode + 1) % TOTAL_MODES);
-      
-      // When we wrap back to mode 0, cycle to next font (only if enabled)
-      if (currentMode == 0 && portalSettings.fontCyclingEnabled) {
-        currentFontIndex = (currentFontIndex + 1) % totalFonts;
-        applyGlobalFont(currentFontIndex);
-        Serial.printf("🎨 FONT CYCLED TO %d\n", currentFontIndex);
-        
-        // Visual feedback for font change
-        gfx->fillRect(0, 0, 320, 25, 0x07FF); // Cyan background
-        gfx->setTextColor(BLACK);
-        gfx->setTextSize(1);
-        gfx->setCursor(5, 10);
-        gfx->printf("FONT %d/12", currentFontIndex + 1);
-        delay(800);  // Show font change message
-        gfx->fillRect(0, 0, 320, 25, BLACK); // Clear
-      }
-      
-      Serial.printf("Auto-scroll: switching to mode %d (font %d)\n", currentMode, currentFontIndex);
+      Serial.printf("Auto-scroll: switching to next mode (after %lums)\n", currentInterval);
       switchMode();
       lastModeSwitch = millis();
     }
@@ -8779,7 +8735,7 @@ void drawFireworkParticles() {
     
     // Draw particle
     gfx->setTextColor(drawColor);
-    gfx->setTextSize(globalTextSize);
+    gfx->setTextSize(1);
     gfx->setCursor((int)p->x, (int)p->y);
     gfx->print(p->character);
     
@@ -9020,12 +8976,7 @@ void initPortal() {
   portalSettings.autoAdvanceTime = preferences.getInt("autoTime", 0); // Default to 30s auto-advance  
   portalSettings.speedSetting = preferences.getInt("speed", 1); // Default to normal
   portalSettings.brightnessSetting = preferences.getInt("brightness", 3); // Default to 100%
-  portalSettings.fontCyclingEnabled = preferences.getBool("fontCycle", true); // Default to enabled
-  currentFontIndex = preferences.getInt("font", 0); // Default to font 0
   preferences.end();
-  
-  // Apply loaded font
-  applyGlobalFont(currentFontIndex);
   
   // Start WiFi Access Point
   WiFi.mode(WIFI_AP);
@@ -9062,19 +9013,6 @@ void handlePortalRoot() {
   
   html += "<p>Current Mode (0-100):</p>";
   html += "<input type='number' name='mode' value='" + String(portalSettings.currentMode) + "' min='0' max='100'><br>";
-  
-  html += "<p>Font Size (0-11):</p>";
-  html += "<input type='number' name='font' value='" + String(currentFontIndex) + "' min='0' max='11'><br>";
-  
-  html += "<p>Font Auto-Cycling:</p>";
-  html += "<select name='fontcycle'>";
-  html += "<option value='1'";
-  if (portalSettings.fontCyclingEnabled) html += " selected";
-  html += ">ON - Auto cycle through font sizes</option>";
-  html += "<option value='0'";
-  if (!portalSettings.fontCyclingEnabled) html += " selected";
-  html += ">OFF - Stay on current font size</option>";
-  html += "</select><br>";
   
   html += "<p>Auto-Advance Timer:</p>";
   html += "<select name='autoTime'>";
@@ -9120,12 +9058,6 @@ void handlePortalSubmit() {
     portalSettings.currentMode = portalServer->arg("mode").toInt();
     portalSettings.currentMode = constrain(portalSettings.currentMode, 0, 100);
   }
-  if (portalServer->hasArg("font")) {
-    currentFontIndex = portalServer->arg("font").toInt();
-    currentFontIndex = constrain(currentFontIndex, 0, 11);
-    applyGlobalFont(currentFontIndex);
-    Serial.printf("🎨 FONT SET TO %d via web portal\n", currentFontIndex);
-  }
   if (portalServer->hasArg("autoTime")) {
     portalSettings.autoAdvanceTime = portalServer->arg("autoTime").toInt();
   }
@@ -9136,18 +9068,12 @@ void handlePortalSubmit() {
     portalSettings.brightnessSetting = portalServer->arg("brightness").toInt();
   }
   
-  if (portalServer->hasArg("fontcycle")) {
-    portalSettings.fontCyclingEnabled = (portalServer->arg("fontcycle") == "1");
-  }
-  
   // Save settings
   preferences.begin("matrix101", false);
   preferences.putInt("mode", portalSettings.currentMode);
   preferences.putInt("autoTime", portalSettings.autoAdvanceTime);
   preferences.putInt("speed", portalSettings.speedSetting);
   preferences.putInt("brightness", portalSettings.brightnessSetting);
-  preferences.putBool("fontCycle", portalSettings.fontCyclingEnabled);
-  preferences.putInt("font", currentFontIndex);
   preferences.end();
   
   // Send success response
