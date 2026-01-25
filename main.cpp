@@ -7,6 +7,10 @@
 #include <WebServer.h>
 #include <DNSServer.h>
 #include <Preferences.h>
+#include <vector>
+#include <map>
+#include <algorithm>
+#include <set>
 
 // Hardware pins - PROVEN WORKING CONFIG
 #define BL_PIN 21
@@ -157,6 +161,7 @@ void applyGlobalFont(int fontIndex) {
 }
 
 EffectMode currentMode = MATRIX_CUSTOM;
+bool wifiScannerMode = false;  // NEW: Toggle between Matrix and WiFi Scanner modes
 unsigned long lastTouch = 0;
 const unsigned long touchDelay = 500;
 
@@ -581,7 +586,38 @@ struct PortalSettings {
   int brightnessSetting;        // Brightness: 0=25%, 1=50%, 2=75%, 3=100%
   bool fontCyclingEnabled;      // Font cycling on/off toggle
   bool settingsChanged;         // Flag to apply changes
+  bool wifiScannerMode;         // NEW: WiFi Scanner mode toggle
 } portalSettings;
+
+// === WIFI THREAT SCANNER VARIABLES ===
+struct ThreatNetwork {
+  String ssid;
+  String bssid;
+  int32_t rssi;
+  int channel;
+  int threatLevel;  // 0=Safe, 1=Suspicious, 2=High Risk, 3=Critical
+  String threatReason;
+};
+
+std::vector<ThreatNetwork> threatNetworks;
+unsigned long lastWiFiScan = 0;
+bool isScanning = false;
+int totalNetworks = 0;
+int threatsFound = 0;
+int scrollOffset = 0;  // NEW: For scrolling through networks
+bool continuousMode = true;  // NEW: Continuous scanning like Marauder
+std::set<String> seenBSSIDs;  // NEW: Track seen networks to avoid duplicates
+unsigned long lastNewNetworkTime = 0;  // NEW: Track when last network was added
+int previousNetworkCount = 0;  // NEW: Track network count changes
+int scrollSpeedMs = 2000;  // NEW: Scroll speed in milliseconds (default 2 seconds)
+int speedLevels[] = {500, 1000, 2000, 5000, 10000};  // NEW: Speed options (0.5s, 1s, 2s, 5s, 10s)
+int currentSpeedIndex = 2;  // NEW: Start at 2 seconds
+
+void initWiFiScanner() {
+  lastNewNetworkTime = millis(); // Initialize timing
+  previousNetworkCount = 0;
+  scrollOffset = 0;
+}
 
 // Auto-advance timing values in milliseconds
 unsigned long autoAdvanceTimes[] = {30000, 60000, 600000, 3600000, 0}; // 30s, 1m, 10m, 1h, off
@@ -814,6 +850,13 @@ bool shouldColumnFracture(int col);
 void createCascadeFracture(int col);
 void getCascadeParameters(EffectMode cascadeType, float* stressThreshold, float* shockRadius, int* shockLifespan, float* stressDecay);
 uint16_t getCascadeColor(int col, int intensity, bool isHead, EffectMode cascadeType);
+
+// === WIFI THREAT SCANNER FUNCTIONS ===
+void renderWiFiScanner();
+void updateWiFiScanner();
+void performThreatScan();
+void drawScanResults();
+void analyzeNetworkThreats();
 
 // === ENTROPY LIFECYCLE FUNCTIONS ===
 void initEntropySystem();
@@ -1646,6 +1689,11 @@ void switchMode() {
 void setup() {
   Serial.begin(115200);
   Serial.println("🌧️ MATRIX RAIN SCREENSAVER");
+  
+  // FORCE MATRIX MODE - CRITICAL FIX
+  wifiScannerMode = false;
+  Serial.println("🔄 FORCED MATRIX MODE ON BOOT!");
+  Serial.printf("WiFi Scanner Mode: %s\n", wifiScannerMode ? "ENABLED" : "DISABLED");
   
   // Initialize display - PROVEN WORKING CONFIG
   gfx->begin();
@@ -7976,12 +8024,61 @@ void drawEpicycle() {
 }
 
 void loop() {
-  // Handle WiFi portal in parallel with Matrix effects
+  // Handle WiFi portal in parallel with effects
   if (portalActive) {
     portalDNS->processNextRequest();
     portalServer->handleClient();
-    // Continue to run Matrix effects below - no return!
+    // Continue to run effects below - no return!
   }
+  
+  // === WIFI SCANNER MODE vs MATRIX MODE ===
+  if (wifiScannerMode) {
+    // WIFI SCANNER MODE - Threat detection with adjustable auto-scroll speed
+    
+    // Boot button cycles through scroll speeds
+    static bool bootPressed = false;
+    static unsigned long lastBootPress = 0;
+    
+    if (digitalRead(BOOT_PIN) == LOW) {
+      if (!bootPressed && (millis() - lastBootPress > 300)) {
+        currentSpeedIndex = (currentSpeedIndex + 1) % 5;
+        scrollSpeedMs = speedLevels[currentSpeedIndex];
+        Serial.printf("🎮 Speed changed to %dms (%s)\n", scrollSpeedMs, 
+                     scrollSpeedMs < 1000 ? "Fast" : scrollSpeedMs == 1000 ? "Normal" : 
+                     scrollSpeedMs == 2000 ? "Medium" : scrollSpeedMs == 5000 ? "Slow" : "Very Slow");
+        bootPressed = true;
+        lastBootPress = millis();
+        delay(200);
+      }
+    } else {
+      bootPressed = false;
+    }
+    
+    // Auto-scroll through networks (forward direction) - ALWAYS active
+    static unsigned long lastAutoScroll = 0;
+    
+    // Check if new networks were added (for display purposes)
+    if (threatNetworks.size() > previousNetworkCount) {
+      lastNewNetworkTime = millis();
+      previousNetworkCount = threatNetworks.size();
+    }
+    
+    // Auto-scroll using current speed setting
+    if (threatNetworks.size() > 12 && // Only if more networks than can fit on screen
+        (millis() - lastAutoScroll > scrollSpeedMs)) { // Use adjustable speed
+      scrollOffset = (scrollOffset + 1) % threatNetworks.size();
+      lastAutoScroll = millis();
+      Serial.printf("🔄 Auto-scroll: viewing network %d/%d (speed: %dms)\n", scrollOffset + 1, threatNetworks.size(), scrollSpeedMs);
+    }
+    
+    updateWiFiScanner();
+    renderWiFiScanner();
+    delay(50);
+    
+    return; // Skip matrix logic when in WiFi scanner mode
+  }
+  
+  // === MATRIX MODE - Original code continues ===
   
   // Check boot button for both short press (mode switch) and long press (auto-scroll toggle)
   if (digitalRead(BOOT_PIN) == LOW) {
@@ -9011,6 +9108,264 @@ uint16_t getHistoryColor(int intensity, bool isHead) {
   }
 }
 
+// === WIFI THREAT SCANNER IMPLEMENTATION ===
+
+void updateWiFiScanner() {
+  // Continuous scanning every 3 seconds (like Marauder AP sniffer)
+  if (millis() - lastWiFiScan > 3000) {
+    performThreatScan();
+  }
+}
+
+void performThreatScan() {
+  Serial.println("🔍 Continuous WiFi scan...");
+  isScanning = true;
+  lastWiFiScan = millis();
+  
+  // DON'T clear previous results - keep building list like Marauder
+  // threatNetworks.clear(); // REMOVED - continuous mode
+  
+  // Perform WiFi scan with aggressive settings
+  WiFi.mode(WIFI_STA);
+  WiFi.disconnect();
+  delay(100);
+  
+  // Single scan pass for speed (continuous mode)
+  int networkCount = WiFi.scanNetworks(false, true); // async=false, show_hidden=true
+  
+  Serial.printf("📡 Found %d networks in current scan\n", networkCount);
+  
+  // Track signal strength changes for anomaly detection
+  static std::map<String, int32_t> previousSignals;
+  
+  int newNetworks = 0;
+  
+  for (int i = 0; i < networkCount; i++) {
+    String currentBSSID = WiFi.BSSIDstr(i);
+    
+    // Skip if we've already seen this exact BSSID (avoid duplicates)
+    if (seenBSSIDs.find(currentBSSID) != seenBSSIDs.end()) {
+      continue;
+    }
+    
+    ThreatNetwork network;
+    network.ssid = WiFi.SSID(i);
+    network.bssid = currentBSSID;
+    network.rssi = WiFi.RSSI(i);
+    network.channel = WiFi.channel(i);
+    
+    // Enhanced threat assessment
+    network.threatLevel = 0;
+    network.threatReason = "";
+    
+    // 1. Hidden/Empty SSID - REDUCED threat level (common legitimate use)
+    if (network.ssid.length() == 0 || network.ssid == " ") {
+      network.threatLevel = max(network.threatLevel, 1);  // Reduced from 2 to 1
+      network.threatReason += "Hidden SSID; ";
+    }
+    
+    // 2. Suspicious names (case insensitive)
+    String lowerSSID = network.ssid;
+    lowerSSID.toLowerCase();
+    
+    if (lowerSSID.indexOf("free") >= 0 || lowerSSID.indexOf("public") >= 0 || 
+        lowerSSID.indexOf("guest") >= 0 || lowerSSID.indexOf("open") >= 0) {
+      network.threatLevel = max(network.threatLevel, 2);
+      network.threatReason += "Suspicious free network; ";
+    }
+    
+    // 3. Known attack devices/tools
+    if (lowerSSID.indexOf("pineapple") >= 0 || lowerSSID.indexOf("pwned") >= 0 ||
+        lowerSSID.indexOf("deauth") >= 0 || lowerSSID.indexOf("evil") >= 0 ||
+        lowerSSID.indexOf("marauder") >= 0 || lowerSSID.indexOf("flipper") >= 0) {
+      network.threatLevel = max(network.threatLevel, 3);
+      network.threatReason += "Known attack device; ";
+    }
+    
+    // 4. Suspicious signal strength patterns
+    if (network.rssi > -20) {
+      network.threatLevel = max(network.threatLevel, 3);
+      network.threatReason += "Extremely strong signal; ";
+    } else if (network.rssi > -40) {
+      network.threatLevel = max(network.threatLevel, 2);
+      network.threatReason += "Very strong signal; ";
+    }
+    
+    // 5. Signal strength anomaly detection
+    String key = network.bssid + ":" + network.ssid;
+    if (previousSignals.find(key) != previousSignals.end()) {
+      int32_t signalDiff = abs(network.rssi - previousSignals[key]);
+      if (signalDiff > 15) {
+        network.threatLevel = max(network.threatLevel, 1);
+        network.threatReason += "Signal anomaly; ";
+      }
+    }
+    previousSignals[key] = network.rssi;
+    
+    // 6. Common corporate/public wifi spoofs
+    if (lowerSSID.indexOf("starbucks") >= 0 || lowerSSID.indexOf("mcdonalds") >= 0 ||
+        lowerSSID.indexOf("airport") >= 0 || lowerSSID.indexOf("hotel") >= 0 ||
+        lowerSSID.indexOf("xfinitywifi") >= 0 || lowerSSID.indexOf("attwifi") >= 0) {
+      network.threatLevel = max(network.threatLevel, 2);
+      network.threatReason += "Potential spoof network; ";
+    }
+    
+    // 7. Weird characters or suspicious patterns
+    if (network.ssid.indexOf("�") >= 0 || network.ssid.length() > 32 || 
+        (network.ssid.indexOf("test") >= 0 && network.ssid.length() < 8)) {
+      network.threatLevel = max(network.threatLevel, 1);
+      network.threatReason += "Suspicious format; ";
+    }
+    
+    // Add new network to list
+    threatNetworks.push_back(network);
+    seenBSSIDs.insert(currentBSSID);
+    newNetworks++;
+    
+    if (network.threatLevel > 0) {
+      Serial.printf("⚠️  NEW THREAT L%d: %s [%s] %ddBm - %s\n", 
+                    network.threatLevel, network.ssid.c_str(), network.bssid.c_str(), 
+                    network.rssi, network.threatReason.c_str());
+    } else {
+      Serial.printf("✅ New: %s [%s] %ddBm\n", 
+                    network.ssid.c_str(), network.bssid.c_str(), network.rssi);
+    }
+  }
+  
+  // Update totals
+  totalNetworks = threatNetworks.size();
+  threatsFound = 0;
+  for (const auto& net : threatNetworks) {
+    if (net.threatLevel > 0) threatsFound++;
+  }
+  
+  Serial.printf("🛡️ Continuous scan: +%d new | %d total | %d threats\n", 
+                newNetworks, totalNetworks, threatsFound);
+  isScanning = false;
+}
+
+void renderWiFiScanner() {
+  gfx->fillScreen(BLACK);
+  
+  // Title
+  gfx->setTextColor(RED);
+  gfx->setTextSize(2);
+  gfx->setCursor(10, 10);
+  gfx->printf("Continuous WiFi Scanner");
+  
+  // Status
+  gfx->setTextColor(WHITE);
+  gfx->setTextSize(1);
+  gfx->setCursor(10, 35);
+  
+  if (isScanning) {
+    gfx->setTextColor(YELLOW);
+    gfx->printf("🔍 Scanning...");
+  } else {
+    gfx->printf("📡 Total: %d | Threats: %d", totalNetworks, threatsFound);
+    
+    // Time since last scan
+    unsigned long timeSince = (millis() - lastWiFiScan) / 1000;
+    gfx->setCursor(180, 35);
+    gfx->printf("(%ds ago)", timeSince);
+  }
+  
+  // Show networks with custom sorting (threats first, hidden last)
+  if (threatNetworks.size() > 0) {
+    gfx->setCursor(10, 55);
+    gfx->setTextColor(CYAN);
+    if (threatNetworks.size() > 12) {
+      String speedName = scrollSpeedMs < 1000 ? "Fast" : scrollSpeedMs == 1000 ? "Normal" : 
+                        scrollSpeedMs == 2000 ? "Medium" : scrollSpeedMs == 5000 ? "Slow" : "Very Slow";
+      gfx->printf("Auto-scroll: %d/%d (%s - press for speed)", scrollOffset + 1, threatNetworks.size(), speedName.c_str());
+    } else {
+      gfx->printf("Viewing: %d/%d", scrollOffset + 1, threatNetworks.size());
+    }
+    
+    // Custom sort: Keep discovery order but threats first
+    std::vector<ThreatNetwork> sortedNetworks;
+    
+    // First add all threats (keeping original order)
+    for (const auto& network : threatNetworks) {
+      if (network.threatLevel > 0) {
+        sortedNetworks.push_back(network);
+      }
+    }
+    
+    // Then add safe networks (keeping original order)
+    for (const auto& network : threatNetworks) {
+      if (network.threatLevel == 0) {
+        sortedNetworks.push_back(network);
+      }
+    }
+    
+    int y = 75;
+    int displayCount = min(12, (int)sortedNetworks.size());
+    
+    // Display networks starting from scroll offset
+    for (int i = 0; i < displayCount; i++) {
+      int networkIndex = (scrollOffset + i) % sortedNetworks.size();
+      ThreatNetwork& network = sortedNetworks[networkIndex];
+      
+      // Highlight current selection
+      if (i == 0) {
+        gfx->fillRect(5, y - 2, 310, 11, gfx->color565(20, 20, 20));
+      }
+      
+      // Color by threat level
+      uint16_t color;
+      switch(network.threatLevel) {
+        case 0: color = GREEN; break;      // Safe
+        case 1: color = YELLOW; break;     // Suspicious
+        case 2: color = RED; break;        // High Risk  
+        case 3: color = MAGENTA; break;    // Critical
+        default: color = WHITE; break;
+      }
+      gfx->setTextColor(color);
+      
+      gfx->setCursor(10, y);
+      String displayName = network.ssid;
+      if (displayName.length() == 0) displayName = "[Hidden]";
+      if (displayName.length() > 16) displayName = displayName.substring(0, 16) + "..";
+      
+      // Show different info based on threat level
+      if (network.threatLevel > 0) {
+        gfx->printf("L%d %-16s %3d", network.threatLevel, displayName.c_str(), network.rssi);
+      } else {
+        gfx->printf("OK %-16s %3d", displayName.c_str(), network.rssi);
+      }
+      
+      // Show channel
+      gfx->setTextColor(gfx->color565(128, 128, 128)); // Gray
+      gfx->printf(" Ch%d", network.channel);
+      
+      y += 10;
+    }
+    
+    // Show threat summary at bottom
+    if (threatsFound > 0) {
+      gfx->setTextColor(RED);
+      gfx->setCursor(10, 210);
+      gfx->printf("⚠️  %d THREATS FOUND!", threatsFound);
+    } else if (totalNetworks > 0) {
+      gfx->setTextColor(GREEN);
+      gfx->setCursor(10, 210);
+      gfx->printf("✅ No threats detected");
+    }
+    
+  } else {
+    gfx->setTextColor(YELLOW);
+    gfx->setCursor(10, 75);
+    gfx->printf("Starting continuous scan...");
+  }
+  
+  // Instructions
+  gfx->setTextColor(CYAN);
+  gfx->setTextSize(1);
+  gfx->setCursor(10, 225);
+  gfx->printf("Press button for speed control | 3sec continuous scan");
+}
+
 // === WIFI CONTROL PORTAL FUNCTIONS ===
 
 void initPortal() {
@@ -9022,6 +9377,9 @@ void initPortal() {
   portalSettings.brightnessSetting = preferences.getInt("brightness", 3); // Default to 100%
   portalSettings.fontCyclingEnabled = preferences.getBool("fontCycle", true); // Default to enabled
   currentFontIndex = preferences.getInt("font", 0); // Default to font 0
+  // ALWAYS START IN MATRIX MODE - ignore saved WiFi mode preference
+  wifiScannerMode = false; // Force Matrix mode on boot
+  Serial.println("🔄 Forced Matrix mode on boot (ignoring saved preference)");
   preferences.end();
   
   // Apply loaded font
@@ -9074,6 +9432,16 @@ void handlePortalRoot() {
   html += "<option value='0'";
   if (!portalSettings.fontCyclingEnabled) html += " selected";
   html += ">OFF - Stay on current font size</option>";
+  html += "</select><br>";
+  
+  html += "<p>🛡️ Device Mode:</p>";
+  html += "<select name='wifimode'>";
+  html += "<option value='0'";
+  if (!wifiScannerMode) html += " selected";
+  html += ">Matrix Mode - Visual effects screensaver (101 modes)</option>";
+  html += "<option value='1'";
+  if (wifiScannerMode) html += " selected";
+  html += ">WiFi Scanner - Network threat detection</option>";
   html += "</select><br>";
   
   html += "<p>Auto-Advance Timer:</p>";
@@ -9140,6 +9508,11 @@ void handlePortalSubmit() {
     portalSettings.fontCyclingEnabled = (portalServer->arg("fontcycle") == "1");
   }
   
+  if (portalServer->hasArg("wifimode")) {
+    wifiScannerMode = (portalServer->arg("wifimode") == "1");
+    Serial.printf("🛡️ WIFI SCANNER MODE: %s\n", wifiScannerMode ? "ENABLED" : "DISABLED (Matrix Mode)");
+  }
+  
   // Save settings
   preferences.begin("matrix101", false);
   preferences.putInt("mode", portalSettings.currentMode);
@@ -9148,6 +9521,7 @@ void handlePortalSubmit() {
   preferences.putInt("brightness", portalSettings.brightnessSetting);
   preferences.putBool("fontCycle", portalSettings.fontCyclingEnabled);
   preferences.putInt("font", currentFontIndex);
+  preferences.putBool("wifiMode", wifiScannerMode);  // Save WiFi scanner mode
   preferences.end();
   
   // Send success response
