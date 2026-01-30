@@ -47,7 +47,17 @@ cd /path/to/project
 
 # Build and flash
 pio run --target upload
-```
+NOTE!
+     ## White Background Fix for New CYD Hardware
+     
+     If your display shows a white background instead of black:
+     
+     1. Delete the existing `src/main.cpp`
+     2. Rename `src/INVERTED-MAIN.cpp` to `src/main.cpp`
+     3. Recompile and flash
+     
+     This fixes display inversion issues on some newer CYD boards.
+
 
 ## Usage
 
