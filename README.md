@@ -1,6 +1,6 @@
 # Matrix101 + Continuous WiFi Scanner
 
-🛡️ **The ultimate ESP32 CYD dual-purpose deviceecho ___BEGIN___COMMAND_OUTPUT_MARKER___ ; PS1= ; PS2= ; EC=0 ; echo ___BEGIN___COMMAND_DONE_MARKER___0 ; }* 🌊
+🛡️ **The ultimate ESP32 CYD dual-purpose device
 
 ## Features
 
